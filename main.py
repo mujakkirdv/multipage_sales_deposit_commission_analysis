@@ -222,7 +222,7 @@ elif page == "Sales History":
     st.write("# 📜 Sales History ")
     st.title("📊 Sales & Deposit Dashboard")
 
-    # ✅ কাস্টমার আউটস্ট্যান্ডিং হিসাব করুন
+    # ✅ Customer outstanding Calculation
     df["customer_outstanding"] = (
         df["openning_balance"].fillna(0) +
         df["sales_amount"].fillna(0) -
@@ -231,13 +231,13 @@ elif page == "Sales History":
         df["customer_cashback"].fillna(0)
     )
 
-    # ✅ Sales Executive অনুযায়ী গ্রুপ করে দেখানো
+    # ✅ Sales Executive group create
     st.subheader("Sales Executive Wise Summary")
     grouped_exec = df.groupby("sales_executive")[
         ["openning_balance", "sales_amount", "sales_return", "paid_amount", "customer_outstanding"]
     ].sum().reset_index()
 
-    # ✅ শুধুমাত্র number columns format করুন
+    # ✅ number columns format
     number_cols = [
         "openning_balance",
         "sales_amount",
@@ -250,11 +250,11 @@ elif page == "Sales History":
         use_container_width=True
     )
 
-    # ✅ Sales Executive বেছে নিন
+    # ✅ Sales Executive 
     executives = df["sales_executive"].dropna().unique()
     selected_exec = st.selectbox("🔍 Select Sales Executive", executives)
 
-    # ✅ নির্বাচিত Executive-এর রিপোর্ট দেখানো
+    # ✅ Select Executive- report
     filtered_df = df[df["sales_executive"] == selected_exec]
     st.subheader(f"📄 Detailed Transactions for: {selected_exec}")
     st.dataframe(filtered_df)
