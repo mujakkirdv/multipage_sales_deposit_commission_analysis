@@ -42,8 +42,11 @@ page = st.sidebar.radio(
      "About data analyst",
      "About Us")
 )
+
+# 1. Main Dashboard (Start)
 if page == "Main Dashboard":
-    st.title("📊 Welburg Metal Pvt Ltd - Dynamic Sales & Deposit Dashboard")
+    st.header("🏢 WELBURG METAL PVT LTD.")
+    st.title("🚀 Sales & Deposit Dashboard")
 
     # Ensure date column is datetime
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
@@ -59,6 +62,7 @@ if page == "Main Dashboard":
     deposit_amount = df_current_month["paid_amount"].sum()
     sales_return = df_current_month["sales_return"].sum()
     customer_cashback = df_current_month["customer_cashback"].sum() if "customer_cashback" in df_current_month.columns else 0
+    actual_sales = sales_amount - sales_return
 
     # Calculate total market due (all time)
     if "customer_outstanding" not in df.columns:
@@ -96,7 +100,7 @@ if page == "Main Dashboard":
             return f"{val:,.2f}"
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("💰 Sales", format_compact(sales_amount))
+    col1.metric("💰 Sales", format_compact(actual_sales))
     col2.metric("🏦 Deposit", format_compact(deposit_amount))
     col3.metric("🔄 Return", format_compact(sales_return))
     col4.metric("🧾 Due", format_compact(total_market_due))
@@ -104,8 +108,11 @@ if page == "Main Dashboard":
     col5.metric("🎁 Cashback", format_compact(customer_cashback))
     col6.metric("📅 Month", today.strftime("%B %Y"))
 
+    st.markdown("---")
+
     st.markdown("### Executive-wise Sales & Due (Current Month)")
     st.dataframe(exec_summary, use_container_width=True)
+    st.markdown("---")
 
     # Bar chart: Month-wise sales and deposit
     st.markdown("### 📊 Month-wise Sales & Deposit")
@@ -116,9 +123,15 @@ if page == "Main Dashboard":
         barmode="group",
         labels={"value": "Amount", "month": "Month", "variable": "Type"},
         title="Month-wise Sales & Deposit")
+    st.plotly_chart(fig, use_container_width=True)
+
+# 1. Main Dashboard (End)
+    
+# 2. Dashboard (Start)
 
 elif page == "Dashboard":
-    st.title("📊 Welburg Metal Pvt Ltd - Dynamic Sales & Deposit Dashboard")
+    st.header("🏢 WELBURG METAL PVT LTD")
+    st.title("📊 Sales & Deposit Dashboard")
 
     # Ensure date column is datetime
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
@@ -134,6 +147,7 @@ elif page == "Dashboard":
     deposit_amount = df_current_month["paid_amount"].sum()
     sales_return = df_current_month["sales_return"].sum()
     customer_cashback = df_current_month["customer_cashback"].sum() if "customer_cashback" in df_current_month.columns else 0
+    actual_sales = sales_amount - sales_return
 
     # Calculate total market due (all time)
     if "customer_outstanding" not in df.columns:
@@ -164,15 +178,19 @@ elif page == "Dashboard":
     # KPI Cards
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric("📅 Current Month", today.strftime("%B %Y"))
-    col2.metric("💰 Sales Amount", f"{sales_amount:,.2f}")
+    col2.metric("💰 Sales Amount", f"{actual_sales:,.2f}")
     col3.metric("🏦 Deposit Amount", f"{deposit_amount:,.2f}")
     col4.metric("🔄 Sales Return", f"{sales_return:,.2f}")
     col5.metric("🎁 Cashback", f"{customer_cashback:,.2f}")
     col6.metric("🧾 Market Due", f"{total_market_due:,.2f}")
 
+    st.markdown("---")
+
     # Executive-wise Sales & Due Table
     st.markdown("### Executive-wise Sales & Due (Current Month)")
     st.dataframe(exec_summary, use_container_width=True)
+
+    st.markdown("---")
 
     # Executive-wise Sales Bar Chart
     st.markdown("### 🧑‍💼 Executive-wise Sales Bar Chart (Current Month)")
@@ -186,6 +204,8 @@ elif page == "Dashboard":
     )
     st.plotly_chart(fig_exec, use_container_width=True)
 
+    st.markdown("---")
+
     # Month-wise sales and deposit bar chart
     st.markdown("### 📊 Month-wise Sales & Deposit")
     fig = px.bar(
@@ -198,6 +218,8 @@ elif page == "Dashboard":
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    st.markdown("---")
+
     # Sales Trend Line Chart (last 6 months)
     st.markdown("### 📈 Sales Trend (Last 6 Months)")
     last_6_months = month_summary.tail(6)
@@ -209,20 +231,23 @@ elif page == "Dashboard":
         title="Sales Trend (Last 6 Months)"
     )
     st.plotly_chart(fig_trend, use_container_width=True)
+    st.markdown("---")
 
     # Top 10 Customers by Sales in Current Month
     st.markdown("### 🏅 Top 10 Customers by Sales (Current Month)")
     top_customers = df_current_month.groupby("customer_name")["sales_amount"].sum().reset_index().sort_values(by="sales_amount", ascending=False).head(10)
     st.dataframe(top_customers, use_container_width=True)
+# 2. Dashboard (End)
 
 
 
 
+# 3. Sales History (Start)
 elif page == "Sales History":
     st.write("# 📜 Sales History ")
     st.title("📊 Sales & Deposit Dashboard")
 
-    # ✅ Customer outstanding Calculation
+    # ✅ কাস্টমার আউটস্ট্যান্ডিং হিসাব করুন
     df["customer_outstanding"] = (
         df["openning_balance"].fillna(0) +
         df["sales_amount"].fillna(0) -
@@ -231,13 +256,13 @@ elif page == "Sales History":
         df["customer_cashback"].fillna(0)
     )
 
-    # ✅ Sales Executive group create
+    # ✅ Sales Executive অনুযায়ী গ্রুপ করে দেখানো
     st.subheader("Sales Executive Wise Summary")
     grouped_exec = df.groupby("sales_executive")[
         ["openning_balance", "sales_amount", "sales_return", "paid_amount", "customer_outstanding"]
     ].sum().reset_index()
 
-    # ✅ number columns format
+    # ✅ শুধুমাত্র number columns format করুন
     number_cols = [
         "openning_balance",
         "sales_amount",
@@ -249,20 +274,25 @@ elif page == "Sales History":
         grouped_exec.style.format({col: "{:,.2f}" for col in number_cols}),
         use_container_width=True
     )
+    st.success("Total Outstanding Amount: {:.2f} BDT".format(df["customer_outstanding"].sum()))
+    st.markdown("---")
 
-    # ✅ Sales Executive 
+
+    # ✅ Sales Executive বেছে নিন
     executives = df["sales_executive"].dropna().unique()
     selected_exec = st.selectbox("🔍 Select Sales Executive", executives)
 
-    # ✅ Select Executive- report
+    # ✅ নির্বাচিত Executive-এর রিপোর্ট দেখানো
     filtered_df = df[df["sales_executive"] == selected_exec]
     st.subheader(f"📄 Detailed Transactions for: {selected_exec}")
     st.dataframe(filtered_df)
+    st.success(f"Total Outstanding for {selected_exec}: {filtered_df['customer_outstanding'].sum():,.2f} BDT")
+    
+
+# 3. Sales History (End)
 
 
-
-
-
+# 4. Executive-wise Transactions (Start)
 elif page == "Executive-wise Transactions":
     # --- Executive-wise Section ---
     st.header("Executive-wise Transactions")
@@ -274,7 +304,9 @@ elif page == "Executive-wise Transactions":
         df["customer_outstanding"] = (
             df["openning_balance"].fillna(0) +
             df["sales_amount"].fillna(0) -
-            df["sales_return"].fillna(0)
+            df["sales_return"].fillna(0)-
+            df["paid_amount"].fillna(0) -
+            df["customer_cashback"].fillna(0)
         )
 
     # Date range for executive
@@ -303,6 +335,10 @@ elif page == "Executive-wise Transactions":
         key="exec_download"
     )
 
+# 4. Executive-wise Transactions (End)
+
+
+# 5. Customer-wise Transactions (Start)
 elif page == "Customer-wise Transactions":
     # --- Customer-wise Section ---
     st.header("Customer-wise Transactions")
@@ -344,7 +380,9 @@ elif page == "Customer-wise Transactions":
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key="cust_download"
     )
+# 5. Customer-wise Transactions (End)
 
+# 6. Customer Outstanding (Start)
 elif page == "Customer Outstanding":
     st.header("📅 Customer-wise Date Range Summary")
 
@@ -395,6 +433,10 @@ elif page == "Customer Outstanding":
     with st.expander("Show Transactions for Customer in Date Range"):
         st.dataframe(cust_filtered, use_container_width=True)
 
+# 6. Customer Outstanding (End)
+
+# 7. Executive wise customer (Start)
+
 elif page == "Executive wise customer":
     st.header("Executive-wise Customer Transactions")
     
@@ -415,6 +457,10 @@ elif page == "Executive wise customer":
     # Show transactions
     st.subheader(f"Transactions for {selected_customer} by {selected_exec}")
     st.dataframe(cust_filtered, use_container_width=True)
+
+# 7. Executive wise customer (End)
+
+# 8. Executive-wise Customer outstanding (Start)
 
 elif page == "Executive-wise Customer outstanding":
     # Executive-wise, customer-wise total outstanding
@@ -449,6 +495,9 @@ elif page == "Executive-wise Customer outstanding":
     total_outstanding = customer_outstanding["customer_outstanding"].sum()
     st.success(f"Total Outstanding Amount for {selected_exec}: {total_outstanding:,.2f} BDT")
 
+# 8. Executive-wise Customer outstanding (End)
+
+# 9. Executive Transaction (Start)
 elif page == "Executive Transaction":
     st.header("📅 Executive-wise Sales, Deposit, Return & Customer Cashback (Custom Date Range)")
 
@@ -511,6 +560,11 @@ elif page == "Executive Transaction":
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key="exec_trans_download"
     )
+
+
+# 9. Executive Transaction (End)
+
+# 10. Date wise sales summary (Start)
 elif page == "Date wise sales summary":
     st.header("📅 Date-wise Sales Executive-wise Sales & Deposit Transactions")
 
@@ -560,6 +614,11 @@ elif page == "Date wise sales summary":
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key="datewise_download"
     )
+
+
+# 10. Date wise sales summary (End)
+
+# 11. Customer Category-wise Transactions (Start)
 
 elif page == "Customer Category-wise Transactions":
     st.header("📅 Date Range & Customer Category-wise Sales, Deposit, Return & Commission")
@@ -628,6 +687,10 @@ elif page == "Customer Category-wise Transactions":
             key="cat_download"
         )
 
+
+# 11. Customer Category-wise Transactions (End)
+
+# 12. Category-wise Transactions (Start)
 elif page == "Category-wise Transactions":
     st.header("📅 Date Range & Customer Category-wise Sales, Deposit, Return & Commission")
 
@@ -719,6 +782,10 @@ elif page == "Category-wise Transactions":
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             key="exec_download")
         
+
+# 12. Category-wise Transactions (End)
+
+# 13. Daily Sales Summary (Start)
 
 elif page == "Daily Sales Summary":
     st.header("📅 Daily Sales, Deposit, Return & Due Summary")
@@ -831,6 +898,11 @@ elif page == "Daily Sales Summary":
         key="exec_daily_download"
     )
     
+
+# 13. Daily Sales Summary (End)
+
+# 14. About Us (Start)
+
 elif page == "About Us":
     st.title("📊 About US")
     st.markdown("---")
@@ -861,7 +933,9 @@ elif page == "About Us":
         """,
         unsafe_allow_html=True)
     
+# 14. About Us (End)
 
+# 15. Sales & Deposit performance (Start)
 elif page == "Sales & Deposit performance":
     st.title("📈 Executive & Customer Performance Statistics")
     st.markdown("---")
@@ -938,9 +1012,44 @@ elif page == "Sales & Deposit performance":
     )
     st.plotly_chart(fig_cust_trend, use_container_width=True)
 
-elif page == "About data analyst":
-    pass
+# 15. Sales & Deposit performance (End)
 
+# 16. About data analyst (Start)
+elif page == "About data analyst":
+    st.title("📊 About Data Analyst")
+    st.write("""
+A **Data Analyst** is a professional who collects, processes, and analyzes data to help organizations make informed decisions.
+
+As a **Data Analyst**, I work with raw data, clean and transform it, then generate insights through reports, dashboards, and visualizations.
+
+#### 🔍 Responsibilities:
+- Gathering data from various sources (e.g., Excel, databases, APIs)
+- Cleaning and preprocessing data using Python or tools like Excel
+- Using tools like **Pandas**, **NumPy**, **Google Sheets**, or **SQL**
+- Creating reports, dashboards, and visual insights using **Streamlit**, **Plotly**, or **Matplotlib**
+- Supporting business decisions with data-driven insights
+
+#### 🧠 Key Tools I Use:
+- **Python** – Core language for data manipulation
+- **Pandas & NumPy** – Data wrangling and computation
+- **Streamlit** – Interactive dashboards
+- **Google Sheets** – Simple but powerful analytics
+- **SQL** – Querying structured data
+- **Plotly / Seaborn / Matplotlib** – For stunning visualizations
+
+#### 💡 My Experience:
+With experience in **pharmacy, inventory, and sales data**, I specialize in turning raw business data into easy-to-understand dashboards and reports for decision-makers.
+
+Whether it's **tracking sales**, **managing customer dues**, or **monitoring executive performance**, I bring real-world data into action.
+
+    """)
+
+    st.success("Let data talk, and let businesses grow smarter with insights!")
+
+
+# 16. About data analyst (End)
+
+# 17. Sales commission (Start)
 elif page == "Sales commission":
     st.title("💸 Date Range Wise Executive, Team Leader & GM Commission")
     st.markdown("---")
@@ -994,6 +1103,7 @@ elif page == "Sales commission":
         key="commission_download"
     )
 
+# 17. Sales commission (End)
 elif page == "Our Products":
     st.title("📊 Our product prices")
     st.markdown("---")
@@ -1062,7 +1172,7 @@ elif page == "Our Products":
     
 
 st.markdown("---")
-   
+
 
 st.markdown(
     """
