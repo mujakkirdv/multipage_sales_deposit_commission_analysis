@@ -5,7 +5,7 @@ import os
 import plotly.express as px
 
 # ✅ Excel file path
-file_path = r"C:\Users\User\Desktop\Accounts\2025\JULY\SALES AND TRANSECTION\july_sale_data.xlsx"
+file_path = "july_sale_data.xlsx"
 
 # Page configuration
 st.set_page_config(
