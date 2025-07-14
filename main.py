@@ -259,7 +259,7 @@ elif page == "Sales History":
     # ✅ Sales Executive অনুযায়ী গ্রুপ করে দেখানো
     st.subheader("Sales Executive Wise Summary")
     grouped_exec = df.groupby("sales_executive")[
-        ["openning_balance", "sales_amount", "sales_return", "paid_amount", "customer_outstanding"]
+        ["openning_balance", "sales_amount", "sales_return", "paid_amount","customer_cashback", "customer_outstanding"]
     ].sum().reset_index()
 
     # ✅ শুধুমাত্র number columns format করুন
