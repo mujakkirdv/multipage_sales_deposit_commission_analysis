@@ -3,6 +3,8 @@ import pandas as pd
 from io import BytesIO
 import os
 import plotly.express as px
+from PIL import Image
+
 
 # ✅ Excel file path
 file_path = "july_sale_data.xlsx"
@@ -21,30 +23,33 @@ def load_data(path):
 df = load_data(file_path)
 
 # Sidebar navigation
+
 page = st.sidebar.radio(
-    "Menu",
-    ("Main Dashboard",
-     "Dashboard",
-     "Sales History", 
-     "Executive-wise Transactions",
-     "Customer-wise Transactions",
-     "Customer Outstanding",
-     "Executive wise customer",
-     "Executive-wise Customer outstanding",
-     "Executive Transaction",
-     "Date wise sales summary",
-     "Customer Category-wise Transactions",
-     "Category-wise Transactions",
-     "Daily Sales Summary",
-     "Sales & Deposit performance",
-     "Sales commission",
-     "Our Products",
-     "About data analyst",
-     "About Us")
+    "✨ Menu",
+    (
+        "🏠 Home",                    #1
+        "📍 Dashboard",                 #2
+        "💸 Sales",                  #3
+        "🧑‍💼 Exec Txns",             #4
+        "🧑‍💳 Cust Txns",            #5
+        "🧾 Cust Dues",                    #6
+        "🤝 Exec → Cust",             #7
+        "📉 Exec Dues",              #8
+        "📤 Exec Sales",            #9
+        "🗓️ Date Summary",            #10
+        "🏷️ Cust by Type",         #11
+        "🗃️ Type Sales",           #12
+        "📆 Daily Recap",           #13
+        "📈 Performance",            #14
+        "💸 Commissions",           #15
+        "🛒 Products",                  #16
+        "👨‍💻 Analyst Bio",           #17
+        "💡 About"                   #18
+    )
 )
 
 # 1. Main Dashboard (Start)
-if page == "Main Dashboard":
+if page == "🏠 Home":
     st.header("🏢 WELBURG METAL PVT LTD.")
     st.title("🚀 Sales & Deposit Dashboard")
 
@@ -125,11 +130,45 @@ if page == "Main Dashboard":
         title="Month-wise Sales & Deposit")
     st.plotly_chart(fig, use_container_width=True)
 
+    st.markdown("---")
+
+    # Bar chart: Executive-wise sales and due
+    st.markdown("### 🧑‍💼 Executive-wise Sales Bar Chart (Current Month)" \
+    "")
+    fig_exec = px.bar(
+        exec_summary,
+        x="sales_executive",
+        y=["sales_amount", "paid_amount", "due_amount"],
+        barmode="group",
+        labels={"value": "Amount", "sales_executive": "Executive", "variable": "Type"},
+        title="Executive-wise Sales, Deposit & Due"
+    )
+    st.plotly_chart(fig_exec, use_container_width=True)
+    st.markdown("---")
+    # Line chart: Sales trend (last 6 months)
+    st.markdown("### 📈 Sales Trend (Last 6 Months)")
+    last_6_months = month_summary.tail(6)
+    fig_trend = px.line(
+        last_6_months,
+        x="month",
+        y="sales_amount",
+        markers=True,
+        title="Sales Trend (Last 6 Months)"
+    )
+    st.plotly_chart(fig_trend, use_container_width=True)
+    st.markdown("---")
+    # Top 10 Customers by Sales in Current Month
+    st.markdown("### 🏅 Top 10 Customers by Sales (Current Month)")
+    top_customers = df_current_month.groupby("customer_name")["sales_amount"].sum().reset_index().sort_values(by="sales_amount", ascending=False).head(10)
+    st.dataframe(top_customers, use_container_width=True)
+    st.markdown("---")
+
+
 # 1. Main Dashboard (End)
     
 # 2. Dashboard (Start)
 
-elif page == "Dashboard":
+elif page == "📍 Dashboard":
     st.header("🏢 WELBURG METAL PVT LTD")
     st.title("📊 Sales & Deposit Dashboard")
 
@@ -243,11 +282,11 @@ elif page == "Dashboard":
 
 
 # 3. Sales History (Start)
-elif page == "Sales History":
+elif page == "💸 Sales":
     st.write("# 📜 Sales History ")
     st.title("📊 Sales & Deposit Dashboard")
 
-    # ✅ কাস্টমার আউটস্ট্যান্ডিং হিসাব করুন
+    # ✅ Customer Outstanding calculation
     df["customer_outstanding"] = (
         df["openning_balance"].fillna(0) +
         df["sales_amount"].fillna(0) -
@@ -256,13 +295,13 @@ elif page == "Sales History":
         df["customer_cashback"].fillna(0)
     )
 
-    # ✅ Sales Executive অনুযায়ী গ্রুপ করে দেখানো
+    # ✅ Sales Executive Wise Summary
     st.subheader("Sales Executive Wise Summary")
     grouped_exec = df.groupby("sales_executive")[
-        ["openning_balance", "sales_amount", "sales_return", "paid_amount","customer_cashback", "customer_outstanding"]
+        ["openning_balance", "sales_amount", "sales_return", "paid_amount", "customer_cashback","customer_outstanding"]
     ].sum().reset_index()
 
-    # ✅ শুধুমাত্র number columns format করুন
+    # ✅ number columns format
     number_cols = [
         "openning_balance",
         "sales_amount",
@@ -275,25 +314,50 @@ elif page == "Sales History":
         use_container_width=True
     )
     st.success("Total Outstanding Amount: {:.2f} BDT".format(df["customer_outstanding"].sum()))
+    st.success("Total Sales Amount: {:.2f} BDT".format(df["sales_amount"].sum()))
+    st.success("Total Deposit Amount: {:.2f} BDT".format(df["paid_amount"].sum()))
+    st.success("Total Sales Return: {:.2f} BDT".format(df["sales_return"].sum()))
+    st.success("Total Customer Cashback: {:.2f} BDT".format(df["customer_cashback"].sum()))
+    st.success("Total Executive Commission: {:.2f} BDT".format(df["executive_commission"].sum()))
+    st.success("Total Team Leader Commission: {:.2f} BDT".format(df["teamleader_commission"].sum()))
+    st.success("Total GM Commission: {:.2f} BDT".format(df["gm_commission"].sum()))
+    
     st.markdown("---")
 
 
-    # ✅ Sales Executive বেছে নিন
+    # ✅ Sales Executive Selection
     executives = df["sales_executive"].dropna().unique()
     selected_exec = st.selectbox("🔍 Select Sales Executive", executives)
 
-    # ✅ নির্বাচিত Executive-এর রিপোর্ট দেখানো
+    # ✅ Filter Data for Selected Executive
     filtered_df = df[df["sales_executive"] == selected_exec]
     st.subheader(f"📄 Detailed Transactions for: {selected_exec}")
     st.dataframe(filtered_df)
     st.success(f"Total Outstanding for {selected_exec}: {filtered_df['customer_outstanding'].sum():,.2f} BDT")
+    st.success(f"Total Sales Amount for {selected_exec}: {filtered_df['sales_amount'].sum():,.2f} BDT")
+    st.success(f"Total Deposit Amount for {selected_exec}: {filtered_df['paid_amount'].sum():,.2f} BDT")
+    st.success(f"Total Sales Return for {selected_exec}: {filtered_df['sales_return'].sum():,.2f} BDT")
+    st.success(f"Total Customer Cashback for {selected_exec}: {filtered_df['customer_cashback'].sum():,.2f} BDT")
+    st.markdown("---")
+    # ✅ Download Button for Executive Transactions
+    output_exec = BytesIO()
+    filtered_df.to_excel(output_exec, index=False, engine='openpyxl')
+    output_exec.seek(0)
+    st.download_button(
+        label="Download Executive Transactions as Excel",
+        data=output_exec,
+        file_name=f"{selected_exec}_transactions.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="exec_download"
+    )
+    st.markdown("---")
     
 
 # 3. Sales History (End)
 
 
 # 4. Executive-wise Transactions (Start)
-elif page == "Executive-wise Transactions":
+elif page == "🧑‍💼 Exec Txns":
     # --- Executive-wise Section ---
     st.header("Executive-wise Transactions")
     executives = df["sales_executive"].dropna().unique()
@@ -322,6 +386,12 @@ elif page == "Executive-wise Transactions":
     st.subheader(f"All Transactions for: {selected_exec}")
     st.dataframe(exec_filtered, use_container_width=True)
     st.success(f"Total Outstanding: {exec_filtered['customer_outstanding'].sum():,.2f} BDT")
+    st.success(f"Sales Amount: {exec_filtered['sales_amount'].sum():,.2f} BDT")
+    st.success(f"Deposit Amount: {exec_filtered['paid_amount'].sum():,.2f} BDT")
+    st.success(f"Sales Return: {exec_filtered['sales_return'].sum():,.2f} BDT")
+    st.success(f"Customer Cashback: {exec_filtered['customer_cashback'].sum():,.2f} BDT")
+    st.success(f"Executive Commission: {exec_filtered['executive_commission'].sum():,.2f} BDT")
+
 
     # Download button for executive
     output_exec = BytesIO()
@@ -339,7 +409,7 @@ elif page == "Executive-wise Transactions":
 
 
 # 5. Customer-wise Transactions (Start)
-elif page == "Customer-wise Transactions":
+elif page == "🧑‍💳 Cust Txns":
     # --- Customer-wise Section ---
     st.header("Customer-wise Transactions")
     customers = df["customer_name"].dropna().unique()
@@ -368,6 +438,11 @@ elif page == "Customer-wise Transactions":
     st.subheader(f"All Transactions for: {selected_customer}")
     st.dataframe(cust_filtered, use_container_width=True)
     st.success(f"Total Outstanding: {cust_filtered['customer_outstanding'].sum():,.2f} BDT")
+    st.success(f"Sales Amount: {cust_filtered['sales_amount'].sum():,.2f} BDT")   
+    st.success(f"Paid Amount: {cust_filtered['paid_amount'].sum():,.2f} BDT")  
+    st.success(f"Sales Return: {cust_filtered['sales_return'].sum():,.2f} BDT")
+    st.success(f"Cashback: {cust_filtered['customer_cashback'].sum():,.2f} BDT")
+
 
     # Download button for customer
     output_cust = BytesIO()
@@ -383,7 +458,7 @@ elif page == "Customer-wise Transactions":
 # 5. Customer-wise Transactions (End)
 
 # 6. Customer Outstanding (Start)
-elif page == "Customer Outstanding":
+elif page == "🧾 Cust Dues":
     st.header("📅 Customer-wise Date Range Summary")
 
     # 1. Select customer
@@ -437,7 +512,7 @@ elif page == "Customer Outstanding":
 
 # 7. Executive wise customer (Start)
 
-elif page == "Executive wise customer":
+elif page == "🤝 Exec → Cust":
     st.header("Executive-wise Customer Transactions")
     
     # Select sales executive
@@ -458,11 +533,49 @@ elif page == "Executive wise customer":
     st.subheader(f"Transactions for {selected_customer} by {selected_exec}")
     st.dataframe(cust_filtered, use_container_width=True)
 
+    # Calculate customer_outstanding if not already present
+    if "customer_outstanding" not in cust_filtered.columns:
+        cust_filtered["customer_outstanding"] = (
+            cust_filtered["openning_balance"].fillna(0) +
+            cust_filtered["sales_amount"].fillna(0) -
+            cust_filtered["sales_return"].fillna(0) -
+            cust_filtered["paid_amount"].fillna(0) -
+            cust_filtered["customer_cashback"].fillna(0)
+        )
+    # Show total outstanding for the customer
+    total_outstanding = cust_filtered["customer_outstanding"].sum()
+    st.success(f"Total Outstanding for {selected_customer}: {total_outstanding:,.2f} BDT")  
+    # Show total sales and deposit for the customer
+    total_sales = cust_filtered["sales_amount"].sum()
+    total_deposit = cust_filtered["paid_amount"].sum()
+    st.success(f"Total Sales for {selected_customer}: {total_sales:,.2f} BDT")
+    st.success(f"Total Deposit for {selected_customer}: {total_deposit:,.2f} BDT")
+    # Show total sales return and cashback for the customer
+    total_return = cust_filtered["sales_return"].sum()
+    total_cashback = cust_filtered["customer_cashback"].sum() if "customer_cashback" in cust_filtered.columns else 0
+    st.success(f"Total Sales Return for {selected_customer}: {total_return:,.2f} BDT")
+    st.success(f"Total Cashback for {selected_customer}: {total_cashback:,.2f} BDT")
+    # Download button for executive customer transactions
+    output_exec_cust = BytesIO()
+    cust_filtered.to_excel(output_exec_cust, index=False, engine='openpyxl')
+    output_exec_cust.seek(0)
+    st.download_button(
+        label="Download Executive Customer Transactions as Excel",
+        data=output_exec_cust,
+        file_name=f"{selected_exec}_{selected_customer}_transactions.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="exec_cust_download"
+    )
+
+
+
+   
+
 # 7. Executive wise customer (End)
 
 # 8. Executive-wise Customer outstanding (Start)
 
-elif page == "Executive-wise Customer outstanding":
+elif page == "📉 Exec Dues":
     # Executive-wise, customer-wise total outstanding
 
     st.header("🔎 Executive-wise Customer Outstanding")
@@ -494,11 +607,27 @@ elif page == "Executive-wise Customer outstanding":
     # Show total outstanding amount for the executive
     total_outstanding = customer_outstanding["customer_outstanding"].sum()
     st.success(f"Total Outstanding Amount for {selected_exec}: {total_outstanding:,.2f} BDT")
+    st.success(f"Total Sales Amount for {selected_exec}: {exec_df['sales_amount'].sum():,.2f} BDT")
+    st.success(f"Total Deposit Amount for {selected_exec}: {exec_df['paid_amount'].sum():,.2f} BDT")
+    st.success(f"Total Sales Return for {selected_exec}: {exec_df['sales_return'].sum():,.2f} BDT")
+    st.success(f"Total Customer Cashback for {selected_exec}: {exec_df['customer_cashback'].sum():,.2f} BDT")
+    # Download button for executive customer outstanding
+    output_exec_outstanding = BytesIO()
+    customer_outstanding.to_excel(output_exec_outstanding, index=False, engine='openpyxl')
+    output_exec_outstanding.seek(0)
+
+    st.download_button(
+        label="Download Executive Customer Outstanding as Excel",
+        data=output_exec_outstanding,
+        file_name=f"{selected_exec}_customer_outstanding.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="exec_outstanding_download"
+    )
 
 # 8. Executive-wise Customer outstanding (End)
 
 # 9. Executive Transaction (Start)
-elif page == "Executive Transaction":
+elif page == "📤 Exec Sales":
     st.header("📅 Executive-wise Sales, Deposit, Return & Customer Cashback (Custom Date Range)")
 
     # Ensure date column is datetime
@@ -565,7 +694,7 @@ elif page == "Executive Transaction":
 # 9. Executive Transaction (End)
 
 # 10. Date wise sales summary (Start)
-elif page == "Date wise sales summary":
+elif page == "🗓️ Date Summary":
     st.header("📅 Date-wise Sales Executive-wise Sales & Deposit Transactions")
 
     # Ensure date column is datetime
@@ -620,7 +749,7 @@ elif page == "Date wise sales summary":
 
 # 11. Customer Category-wise Transactions (Start)
 
-elif page == "Customer Category-wise Transactions":
+elif page == "🏷️ Cust by Type":
     st.header("📅 Date Range & Customer Category-wise Sales, Deposit, Return & Commission")
 
     # Ensure date column is datetime
@@ -691,7 +820,7 @@ elif page == "Customer Category-wise Transactions":
 # 11. Customer Category-wise Transactions (End)
 
 # 12. Category-wise Transactions (Start)
-elif page == "Category-wise Transactions":
+elif page == "🗃️ Type Sales":
     st.header("📅 Date Range & Customer Category-wise Sales, Deposit, Return & Commission")
 
     # Ensure date column is datetime
@@ -787,7 +916,7 @@ elif page == "Category-wise Transactions":
 
 # 13. Daily Sales Summary (Start)
 
-elif page == "Daily Sales Summary":
+elif page == "📆 Daily Recap":
     st.header("📅 Daily Sales, Deposit, Return & Due Summary")
 
     # Always calculate customer_outstanding
@@ -903,40 +1032,63 @@ elif page == "Daily Sales Summary":
 
 # 14. About Us (Start)
 
-elif page == "About Us":
-    st.title("📊 About US")
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; font-size: 16px;'>
-            <b>Company Information</b><br>
-            <b>Name:</b> WELBURG METAL PVT LTD<br>
-            <b>Address:</b> Sadapur, Nagorkonda, Savar, Dhaka, Bangladesh<br>
-            <b>Contact:</b> 01787933422<br>
-            <b>Email:</b> info@welburgmetal.com<br>
-            <br>
-            <b>Owner Information</b><br>
-            <b>Name:</b> Md. Hasanuzzaman Helal<br>
-            <b>Position:</b> Managing Director<br>
-            <b>Contact:</b> 01958385999<br>
-            <b>Email:</b> shahinur@welburgmetal.com<br>
-            <br>
-            <b>Product Information</b><br>
-            <ul style='text-align: left; display: inline-block;'>
 
-                
-                <li>All kinds of Mild Steel Products</li>
-            </ul>
-            <br>
-            
-        </div>
-        """,
-        unsafe_allow_html=True)
+elif page == "💡 About":
+    st.title("💼 About Us")
+    st.markdown("---")
+
+    # Company logo
+    logo = Image.open("logo.png")
+    st.image(logo, width=150, caption="WELBURG METAL PVT LTD")
+
+    st.subheader("🏢 Company Overview")
+    st.markdown("""
+**WELBURG METAL PVT LTD** is a Bangladesh-based company focused on delivering high-quality **All kinds of kitchenware and cockware importer and manufucrar**. We are committed to excellence, durability, and customer satisfaction across all our operations.
+    """)
+
+    st.subheader("📍 Company Details")
+    st.markdown("""
+- **Name:** WELBURG METAL PVT LTD  
+- **Address:** Sadapur, Nagorkonda, Savar, Dhaka, Bangladesh  
+- **Contact:** 01787933422  
+- **Email:** welburgmetal2021@gmail.com
+    """)
+
+    st.subheader("👨‍💼 Owner Information")
+
+    # Managing Director photo
+    md_pic = Image.open("md_pic.jpg")
+    st.image(md_pic, width=150, caption="Md. Hasanuzzaman Helal")
+
+    st.markdown("""
+- **Name:** Md. Hasanuzzaman Helal  
+- **Position:** Managing Director  
+- **Contact:** 01958385999  
+- **Email:** hazanuzzaman@welburgmetal.com
+    """)
+
+    st.subheader("🛠️ Our Products")
+    st.markdown("""
+We specialize in:
+- All kinds of cock and kitchenware Products
+- Customized metal solutions (as per demand)
+- Industrial-grade cookware and accessories
+    """)
+
+    st.subheader("🎯 Our Mission")
+    st.markdown("To be a reliable leader in the steel industry, providing top-quality products and services that exceed customer expectations.")
+
+    st.subheader("🌱 Our Vision")
+    st.markdown("To support Bangladesh's industrial growth through innovation, quality, and long-term partnerships.")
+
+    st.subheader("🤝 Get in Touch")
+    st.markdown("We welcome your queries, suggestions, and partnership opportunities. Let’s build the future together!")
+
     
 # 14. About Us (End)
 
 # 15. Sales & Deposit performance (Start)
-elif page == "Sales & Deposit performance":
+elif page == "📈 Performance":
     st.title("📈 Executive & Customer Performance Statistics")
     st.markdown("---")
 
@@ -1015,7 +1167,7 @@ elif page == "Sales & Deposit performance":
 # 15. Sales & Deposit performance (End)
 
 # 16. About data analyst (Start)
-elif page == "About data analyst":
+elif page == "👨‍💻 Analyst Bio":
     st.title("📊 About Data Analyst")
     st.write("""
 A **Data Analyst** is a professional who collects, processes, and analyzes data to help organizations make informed decisions.
@@ -1050,7 +1202,7 @@ Whether it's **tracking sales**, **managing customer dues**, or **monitoring exe
 # 16. About data analyst (End)
 
 # 17. Sales commission (Start)
-elif page == "Sales commission":
+elif page == "💸 Commissions":
     st.title("💸 Date Range Wise Executive, Team Leader & GM Commission")
     st.markdown("---")
 
@@ -1104,7 +1256,7 @@ elif page == "Sales commission":
     )
 
 # 17. Sales commission (End)
-elif page == "Our Products":
+elif page == "🛒 Products":
     st.title("📊 Our product prices")
     st.markdown("---")
    
