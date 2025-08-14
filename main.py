@@ -7,7 +7,7 @@ from PIL import Image
 
 
 # ✅ Excel file path
-file_path = "july_sale_data.xlsx"
+file_path = "sale_data.xlsx"
 
 # Page configuration
 st.set_page_config(
@@ -1341,3 +1341,4 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
